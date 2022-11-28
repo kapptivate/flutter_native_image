@@ -82,6 +82,19 @@ class FlutterNativeImage {
 
     return new File(file);
   }
+
+  /// Crops an image
+  ///
+  /// Crops the given [fileName].
+  /// [angle] control how the image is being rotated.
+  static Future<File> rotateImage(String fileName, int angle) async {
+    var file = await _channel.invokeMethod("rotateImage", {
+      'file': fileName,
+      'angle': angle
+    });
+
+    return new File(file);
+  }
 }
 
 /// Imageorientation enum used for [getImageProperties].

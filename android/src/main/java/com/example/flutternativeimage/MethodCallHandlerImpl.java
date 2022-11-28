@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import androidx.exifinterface.media.ExifInterface;
+
+import android.graphics.Matrix;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -69,6 +71,11 @@ public class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
             int height = call.argument("height");
 
             cropImage(result, fileName, originX, originY, width, height);
+        } else if (call.method.equals("rotateImage")) {
+            int angle = call.argument("angle");
+            String fileName = call.argument("file");
+
+            rotateImage(result, fileName, angle);
         } else if (call.method.equals("getPlatformVersion")) {
             result.success("Android " + android.os.Build.VERSION.RELEASE);
         } else {
@@ -211,6 +218,39 @@ public class MethodCallHandlerImpl implements MethodChannel.MethodCallHandler {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private void rotateImage(MethodChannel.Result result, String fileName, int angle) {
+        File file = new File(fileName);
+        if (!file.exists()) {
+            result.error("File does not exist", fileName, null);
+            return;
+        }
+
+        Bitmap originalBitmap = BitmapFactory.decodeFile(fileName);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(
+                originalBitmap,
+                0,
+                0,
+                originalBitmap.getWidth(),
+                originalBitmap.getHeight(),
+                matrix,
+                true
+        );
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+        try {
+            FileOutputStream fos = new FileOutputStream(fileName);
+            fos.write(bos.toByteArray());
+            fos.flush();
+            fos.close();
+            result.success(fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
