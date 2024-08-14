@@ -1,11 +1,19 @@
-import 'dart:async';
+// You have generated a new plugin project without specifying the `--platforms`
+// flag. A plugin project with no platform support was generated. To add a
+// platform, run `flutter create -t plugin --platforms <platforms> .` under the
+// same directory. You can also find a detailed instruction on how to add
+// platforms in the `pubspec.yaml` at
+// https://flutter.dev/to/pubspec-plugin-platforms.
+
 import 'dart:io';
 
-import 'package:flutter/services.dart';
+import 'flutter_native_image_platform_interface.dart';
+import 'models.dart';
 
 class FlutterNativeImage {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_native_image');
+  Future<String?> getPlatformVersion() {
+    return FlutterNativeImagePlatform.instance.getPlatformVersion();
+  }
 
   /// Compress an image
   ///
@@ -14,55 +22,24 @@ class FlutterNativeImage {
   /// [quality] controls how strong the compression should be. (0-100)
   /// Use [targetWidth] and [targetHeight] to resize the image for a specific
   /// target size.
-  static Future<File> compressImage(String fileName,
+  Future<File> compressImage(String fileName,
       {int percentage = 70,
       int quality = 70,
       int targetWidth = 0,
       int targetHeight = 0}) async {
-    var file = await _channel.invokeMethod("compressImage", {
-      'file': fileName,
-      'quality': quality,
-      'percentage': percentage,
-      'targetWidth': targetWidth,
-      'targetHeight': targetHeight
-    });
-
-    return new File(file);
+    return await FlutterNativeImagePlatform.instance.compressImage(fileName,
+        percentage: percentage,
+        quality: quality,
+        targetWidth: targetWidth,
+        targetHeight: targetHeight);
   }
 
   /// Gets the properties of an image
   ///
   /// Gets the properties of an image given the [fileName].
-  static Future<ImageProperties> getImageProperties(String fileName) async {
-    ImageOrientation decodeOrientation(int? orientation) {
-      // For details, see: https://developer.android.com/reference/android/media/ExifInterface
-      switch (orientation) {
-        case 1:
-          return ImageOrientation.normal;
-        case 2:
-          return ImageOrientation.flipHorizontal;
-        case 3:
-          return ImageOrientation.rotate180;
-        case 4:
-          return ImageOrientation.flipVertical;
-        case 5:
-          return ImageOrientation.transpose;
-        case 6:
-          return ImageOrientation.rotate90;
-        case 7:
-          return ImageOrientation.transverse;
-        case 8:
-          return ImageOrientation.rotate270;
-        default:
-          return ImageOrientation.undefined;
-      }
-    }
-
-    var properties = Map.from(await (_channel.invokeMethod("getImageProperties", {'file': fileName})));
-    return new ImageProperties(
-        width: properties["width"],
-        height: properties["height"],
-        orientation: decodeOrientation(properties["orientation"]));
+  Future<ImageProperties> getImageProperties(String fileName) async {
+    return await FlutterNativeImagePlatform.instance
+        .getImageProperties(fileName);
   }
 
   /// Crops an image
@@ -70,54 +47,18 @@ class FlutterNativeImage {
   /// Crops the given [fileName].
   /// [originX] and [originY] control from where the image should be cropped.
   /// [width] and [height] control how the image is being cropped.
-  static Future<File> cropImage(
+  Future<File> cropImage(
       String fileName, int originX, int originY, int width, int height) async {
-    var file = await _channel.invokeMethod("cropImage", {
-      'file': fileName,
-      'originX': originX,
-      'originY': originY,
-      'width': width,
-      'height': height
-    });
-
-    return new File(file);
+    return await FlutterNativeImagePlatform.instance
+        .cropImage(fileName, originX, originY, width, height);
   }
 
   /// Crops an image
   ///
   /// Crops the given [fileName].
   /// [angle] control how the image is being rotated.
-  static Future<File> rotateImage(String fileName, int angle) async {
-    var file = await _channel.invokeMethod("rotateImage", {
-      'file': fileName,
-      'angle': angle
-    });
-
-    return new File(file);
+  Future<File> rotateImage(String fileName, int angle) async {
+    return await FlutterNativeImagePlatform.instance
+        .rotateImage(fileName, angle);
   }
-}
-
-/// Imageorientation enum used for [getImageProperties].
-enum ImageOrientation {
-  normal,
-  rotate90,
-  rotate180,
-  rotate270,
-  flipHorizontal,
-  flipVertical,
-  transpose,
-  transverse,
-  undefined,
-}
-
-/// Return value of [getImageProperties].
-class ImageProperties {
-  int? width;
-  int? height;
-  ImageOrientation orientation;
-
-  ImageProperties(
-      {this.width = 0,
-      this.height = 0,
-      this.orientation = ImageOrientation.undefined});
 }
